@@ -4,6 +4,10 @@ A simple, straight-forward RPC utility based on Java Socket and Google Gson.
 ## Introduction
 For the record, this is NOT an official project! I strongly suggest that you don't use it on a real project, this utility is only written for educational purpose!
 
+What is RPC? It means **Remote Procedure Call**, stands for the procedure which **the client calls a method on server**, and the **sever returns its output back to the client**. This makes network systems easier and straight forward.
+
+If you want to learn more about RPC, click [here](https://baike.baidu.com/item/远程过程调用/7854346?fromtitle=RPC&fromid=609861&fr=aladdin).
+
 Using RPC Server and RPC Client, your Java C-S program can easily be constructed! RPC method is widly used.
 
 Underneath them, it's `ServerSocket` and `Socket` working(and `Thread`), really simple!
