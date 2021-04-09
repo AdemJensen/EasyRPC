@@ -107,6 +107,8 @@ public class RPCServer {
         {
             case "helloWorld":
                 return TestFunctions.helloWorld((int) ((double) params[0]), (String) params[1]);
+            case "aloha":
+                return TestFunctions.aloha((String) params[0]);
             default:
                 System.out.printf("[RPC Server] No matching function name '%s'.\n", name);
         }

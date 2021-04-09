@@ -27,14 +27,19 @@ Under folder `src/top/chorg/easyrpc/demo`, there are 2 files: `ClientMain` and `
 ```
 // Server:
 [RPC Server] Receiving new connection.
-[RPC Thread 351528873] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
-[RPC Thread 351528873] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
-[RPC Thread 351528873] Receiving null, remote might died, closing connection.
+[RPC Thread 403097490] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
+[RPC Thread 403097490] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
+[RPC Thread 403097490] Receiving RPC request '{"id":3,"funcName":"aloha","params":["芜湖"]}'
+[RPC Thread 403097490] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"Aloha! The information is(芜湖)"}'
+[RPC Thread 403097490] Receiving null, remote might died, closing connection.
 
 // Client:
 [RPC] Sending RPC request: '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
 [RPC] Receiving content: '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
 ThisIsOutputOfHelloWorld(1, 233)
+[RPC] Sending RPC request: '{"id":3,"funcName":"aloha","params":["芜湖"]}'
+[RPC] Receiving content: '{"id":3,"funcName":"aloha","returnValue":"Aloha! The information is(芜湖)"}'
+Aloha! The information is(芜湖)
 ```
 
 ## Customize
