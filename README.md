@@ -17,7 +17,7 @@ You need to have `Gson` library included for your project(This file is included 
 - For IntelliJ Idea users(Recommended): [Here](https://jingyan.baidu.com/article/ff42efa9f8161bc19e220225.html)
 - For Eclipse users: [Here](https://blog.csdn.net/qq_21808961/article/details/81215590)
 
-The Java version of this project is 13. But any version with Lambda support(11 or newer) is ok.
+The Java version of this project is 13. But any version with Lambda support(8 or newer) is ok.
 
 I recommend using IntelliJ Idea as your Java IDE, especially if you are new to Java. This project is built with Idea.
 
