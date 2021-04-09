@@ -7,7 +7,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
 
-public class RPCServerThread {
+public class RPCServerThread extends Thread {
 
     RPCServer serverObject;
     Socket clientSocket;
@@ -22,6 +22,12 @@ public class RPCServerThread {
         this.clientSocket = clientSocket;
         writer = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
         reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+    }
+
+    @Override
+    public void run() {
+        super.run();
         while (!closed) {
             String content;
             try {
@@ -31,7 +37,11 @@ public class RPCServerThread {
             }
             if (content == null) {
                 System.out.printf("[RPC Thread %s] Receiving null, remote might died, closing connection.\n", this.hashCode());
-                serverObject.closeConnection(this);
+                try {
+                    serverObject.closeConnection(this);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
             RPCRequestObject requestObject = new Gson().fromJson(content, RPCRequestObject.class);
@@ -49,6 +59,7 @@ public class RPCServerThread {
     public void closeConnection() throws IOException {
         closed = true;
         clientSocket.close();
+        this.interrupt();
     }
 
 }

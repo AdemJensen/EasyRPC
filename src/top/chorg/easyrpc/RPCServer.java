@@ -74,6 +74,7 @@ public class RPCServer {
                     if (getConnectionCount() < getConnectionLimit()) {
                         RPCServerThread newThread = new RPCServerThread(this, clientSocket);
                         threads.add(newThread);
+                        newThread.start();
                     } else {
                         clientSocket.close();
                         System.out.println("[RPC Server] Connection pool full, connection closed.");
