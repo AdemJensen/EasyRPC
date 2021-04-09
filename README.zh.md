@@ -17,7 +17,7 @@
 - 如果你使用 IntelliJ Idea（推荐）：[这里](https://jingyan.baidu.com/article/ff42efa9f8161bc19e220225.html)
 - 如果你使用 Eclipse： [这里](https://blog.csdn.net/qq_21808961/article/details/81215590)
 
-项目的 Java 版本是 13，不过没有这么严格，只要你的 Java 版本能够支持 Lambda 表达式特性（11 及以上）即可。
+项目的 Java 版本是 13，不过没有这么严格，只要你的 Java 版本能够支持 Lambda 表达式特性（8 及以上）即可。
 
 我推荐使用 IntelliJ Idea 作为你的集成开发编辑器，尤其是刚接触 Java 新手朋友们。这个项目就是用 Idea 做的。
 
@@ -27,14 +27,19 @@
 ```
 // 服务端:
 [RPC Server] Receiving new connection.
-[RPC Thread 351528873] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
-[RPC Thread 351528873] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
-[RPC Thread 351528873] Receiving null, remote might died, closing connection.
+[RPC Thread 403097490] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
+[RPC Thread 403097490] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
+[RPC Thread 403097490] Receiving RPC request '{"id":3,"funcName":"aloha","params":["芜湖"]}'
+[RPC Thread 403097490] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"Aloha! The information is(芜湖)"}'
+[RPC Thread 403097490] Receiving null, remote might died, closing connection.
 
 // 客户端:
 [RPC] Sending RPC request: '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
 [RPC] Receiving content: '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
 ThisIsOutputOfHelloWorld(1, 233)
+[RPC] Sending RPC request: '{"id":3,"funcName":"aloha","params":["芜湖"]}'
+[RPC] Receiving content: '{"id":3,"funcName":"aloha","returnValue":"Aloha! The information is(芜湖)"}'
+Aloha! The information is(芜湖)
 ```
 
 ## 自定义
