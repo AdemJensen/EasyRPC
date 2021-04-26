@@ -27,47 +27,73 @@
 ```
 // 服务端:
 [RPC Server] Receiving new connection.
-[RPC Thread 403097490] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
-[RPC Thread 403097490] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
-[RPC Thread 403097490] Receiving RPC request '{"id":3,"funcName":"aloha","params":["芜湖"]}'
-[RPC Thread 403097490] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"Aloha! The information is(芜湖)"}'
-[RPC Thread 403097490] Receiving null, remote might died, closing connection.
+[RPC Thread 1342691038] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
+[RPC Thread 1342691038] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"\"ThisIsOutputOfHelloWorld(1, 233)\""}'
+[RPC Thread 1342691038] Receiving RPC request '{"id":3,"funcName":"aloha","params":["\"芜湖\""]}'
+[RPC Thread 1342691038] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"{\"strField\":\"ThisIsStrFieldOfReturn\",\"intField\":66666666}"}'
+[RPC Thread 1342691038] Receiving RPC request '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
+[RPC Thread 1342691038] Sending RPC return '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
 
 // 客户端:
-[RPC] Sending RPC request: '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
-[RPC] Receiving content: '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
+[RPC] Sending RPC request: '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
+[RPC] Receiving content: '{"id":2,"funcName":"helloWorld","returnValue":"\"ThisIsOutputOfHelloWorld(1, 233)\""}'
 ThisIsOutputOfHelloWorld(1, 233)
-[RPC] Sending RPC request: '{"id":3,"funcName":"aloha","params":["芜湖"]}'
-[RPC] Receiving content: '{"id":3,"funcName":"aloha","returnValue":"Aloha! The information is(芜湖)"}'
-Aloha! The information is(芜湖)
+[RPC] Sending RPC request: '{"id":3,"funcName":"aloha","params":["\"芜湖\""]}'
+[RPC] Receiving content: '{"id":3,"funcName":"aloha","returnValue":"{\"strField\":\"ThisIsStrFieldOfReturn\",\"intField\":66666666}"}'
+Printing: TestObj{strField='ThisIsStrFieldOfReturn', intField=66666666}
+[RPC] Sending RPC request: '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
+[RPC] Receiving content: '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
+Aloha! The information is(233, 111)
+
 ```
 
 ## 自定义
-要为 RPC Server 添加新的函数，只需要打开 `RPCServer.java` 文件，找到 `executeRpcCall(String name, Object[] params)` 方法：
+要为 RPC Server 添加新的函数，只需要打开 `RPCServer.java` 文件，找到 `executeRpcCall(String name, String[] rawParams)` 方法：
 
 ```java
-public Object executeRpcCall(String name, Object[] params) {
-    switch (name)
-    {
-        case "helloWorld":
-            return TestFunctions.helloWorld((int) ((double) params[0]), (String) params[1]);
-        default:
-            System.out.printf("[RPC Server] No matching function name '%s'.\n", name);
+public class RPCServer {
+
+    //...
+
+    public Object executeRpcCall(String name, String[] rawParams) {
+        switch (name)
+        {
+            case "helloWorld":
+                return TestFunctions.helloWorld(
+                        getParam(rawParams[0], int.class), getParam(rawParams[1], String.class));
+            case "aloha":
+                return TestFunctions.aloha(getParam(rawParams[0], String.class));
+            case "objTest":
+                return TestFunctions.objTest(getParam(rawParams[0], TestObj.class));
+            default:
+                System.out.printf("[RPC Server] No matching function name '%s'.\n", name);
+        }
+        return null;
     }
-    return null;
+
 }
 ```
 
 可以看到，这是一个 `switch` 分支结构，通过 `name` 参数来判断需要调用的方法。要扩展 RPC server 的功能，你可以添加更多 `case` 上去。
+
+`rawParams[]` 数组保存了所有参数传输时的 JSON 字符串。要得到原始的对象，像例子里那样使用 `getParam()` 函数就好。
+
+然后别忘了客户端：
+
+```java
+TestObj obj = client.executeRpcCall("aloha", TestObj.class, "芜湖")
+```
+
+在这个例子中，第二个参数填写了 `TestObj.class`，表明我的 RPC 函数返回值是 `TestObject` 类型的。
 
 ## Q&As
 **Q: 为什么不推荐将这个工具用到真项目中？**
 
 A: 因为这项目没有经过严格的测试，也没有使用任何科学的设计模式。整个工具设计之初就不是为真实项目考虑的。
 
-**Q: 在文件 `RPCServer.java`，函数 `executeRpcCall(String name, Object[] params)` 中，使用了 `(int) ((double) params[0])` 来对函数参数进行转换，这是为什么？**
+**Q: RPCServer 中 `public <T> T getParam(String rawParam, Class<T> classOfParam)` 为什么对？**
 
-A: 这涉及到 `Gson` 库了。如你所见，`Gson` 库承担了对象的序列化和反序列化操作，也就是数据在 Object 和 Json 字符串之间的转换。（如果你不知道什么是 Json，看[这里](https://www.runoob.com/json/json-tutorial.html) ）。问题在于，当 `Gson` 将数字的字符串转换为对象时，在没有指定具体类型的情况下，它默认使用 `java.lang.Double` 存储数据。在本案例中，我们通过定义在 `RPCRequestObject` 中的 `Object` 类型变量承载输入数据，这意味着我们没有为 `Gson` 的转换操作指定具体类型。所以 `Gson` 自动认为数字就是 `Double` 类型。而要想满足调用 `TestFunctions.helloWorld(int, String)` 方法的参数列表要求，我们必须先将其从 `java.lang.Double` 转换为 Java 基本类型 `double`（开箱过程），然后再将其转换为基本类型 `int`。
+A: 我从 `com.google.gson.Gson.fromJson()` 里面学到的用法，可以仔细看看，这个其实与模板函数有关。
 
 **Q: 为什么没有用反射系统来注册函数？**
 

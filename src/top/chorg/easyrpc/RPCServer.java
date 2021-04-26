@@ -1,5 +1,7 @@
 package top.chorg.easyrpc;
 
+import com.google.gson.Gson;
+import top.chorg.easyrpc.demo.TestObj;
 import top.chorg.easyrpc.utils.RPCServerThread;
 import top.chorg.easyrpc.utils.TestFunctions;
 
@@ -102,13 +104,20 @@ public class RPCServer {
         thread.closeConnection();
     }
 
-    public Object executeRpcCall(String name, Object[] params) {
+    public <T> T getParam(String rawParam, Class<T> classOfParam) {
+        return new Gson().fromJson(rawParam, classOfParam);
+    }
+
+    public Object executeRpcCall(String name, String[] rawParams) {
         switch (name)
         {
             case "helloWorld":
-                return TestFunctions.helloWorld((int) ((double) params[0]), (String) params[1]);
+                return TestFunctions.helloWorld(
+                        getParam(rawParams[0], int.class), getParam(rawParams[1], String.class));
             case "aloha":
-                return TestFunctions.aloha((String) params[0]);
+                return TestFunctions.aloha(getParam(rawParams[0], String.class));
+            case "objTest":
+                return TestFunctions.objTest(getParam(rawParams[0], TestObj.class));
             default:
                 System.out.printf("[RPC Server] No matching function name '%s'.\n", name);
         }

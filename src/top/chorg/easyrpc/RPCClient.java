@@ -91,7 +91,7 @@ public class RPCClient {
     }
 
     // Use this function to call remote procedure.
-    public Object executeRpcCall(String name, Object...params) {
+    public <T> T  executeRpcCall(String name, Class<T> classOfReturnValue, Object...params) {
         while (status == RPCClientStatus.Preparing) Thread.onSpinWait();
         if (isClosed()) {
             System.out.println("[RPC] Error: RPC Client connection not established.");
@@ -109,7 +109,7 @@ public class RPCClient {
         }
         RPCReturnObject returnObject = receiveMap.get(id);
         if (returnObject.getFuncName().equals(name)) {
-            return returnObject.getReturnValue();
+            return returnObject.getReturnValue(classOfReturnValue);
         } else {
             System.out.println("[RPC] Error: Return packet ID matched but func name not matched.");
             return null;

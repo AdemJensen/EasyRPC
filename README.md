@@ -27,47 +27,73 @@ Under folder `src/top/chorg/easyrpc/demo`, there are 2 files: `ClientMain` and `
 ```
 // Server:
 [RPC Server] Receiving new connection.
-[RPC Thread 403097490] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
-[RPC Thread 403097490] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
-[RPC Thread 403097490] Receiving RPC request '{"id":3,"funcName":"aloha","params":["芜湖"]}'
-[RPC Thread 403097490] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"Aloha! The information is(芜湖)"}'
-[RPC Thread 403097490] Receiving null, remote might died, closing connection.
+[RPC Thread 1342691038] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
+[RPC Thread 1342691038] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"\"ThisIsOutputOfHelloWorld(1, 233)\""}'
+[RPC Thread 1342691038] Receiving RPC request '{"id":3,"funcName":"aloha","params":["\"芜湖\""]}'
+[RPC Thread 1342691038] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"{\"strField\":\"ThisIsStrFieldOfReturn\",\"intField\":66666666}"}'
+[RPC Thread 1342691038] Receiving RPC request '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
+[RPC Thread 1342691038] Sending RPC return '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
 
 // Client:
-[RPC] Sending RPC request: '{"id":2,"funcName":"helloWorld","params":[1,"233"]}'
-[RPC] Receiving content: '{"id":2,"funcName":"helloWorld","returnValue":"ThisIsOutputOfHelloWorld(1, 233)"}'
+[RPC] Sending RPC request: '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
+[RPC] Receiving content: '{"id":2,"funcName":"helloWorld","returnValue":"\"ThisIsOutputOfHelloWorld(1, 233)\""}'
 ThisIsOutputOfHelloWorld(1, 233)
-[RPC] Sending RPC request: '{"id":3,"funcName":"aloha","params":["芜湖"]}'
-[RPC] Receiving content: '{"id":3,"funcName":"aloha","returnValue":"Aloha! The information is(芜湖)"}'
-Aloha! The information is(芜湖)
+[RPC] Sending RPC request: '{"id":3,"funcName":"aloha","params":["\"芜湖\""]}'
+[RPC] Receiving content: '{"id":3,"funcName":"aloha","returnValue":"{\"strField\":\"ThisIsStrFieldOfReturn\",\"intField\":66666666}"}'
+Printing: TestObj{strField='ThisIsStrFieldOfReturn', intField=66666666}
+[RPC] Sending RPC request: '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
+[RPC] Receiving content: '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
+Aloha! The information is(233, 111)
+
 ```
 
 ## Customize
-To add new functions, just open the `RPCServer.java` file and goto the `executeRpcCall(String name, Object[] params)` method:
+To add new functions, just open the `RPCServer.java` file and goto the `executeRpcCall(String name, String[] rawParams)` method:
 
 ```java
-public Object executeRpcCall(String name, Object[] params) {
-    switch (name)
-    {
-        case "helloWorld":
-            return TestFunctions.helloWorld((int) ((double) params[0]), (String) params[1]);
-        default:
-            System.out.printf("[RPC Server] No matching function name '%s'.\n", name);
+public class RPCServer {
+    
+    //...
+    
+    public Object executeRpcCall(String name, String[] rawParams) {
+        switch (name)
+        {
+            case "helloWorld":
+                return TestFunctions.helloWorld(
+                        getParam(rawParams[0], int.class), getParam(rawParams[1], String.class));
+            case "aloha":
+                return TestFunctions.aloha(getParam(rawParams[0], String.class));
+            case "objTest":
+                return TestFunctions.objTest(getParam(rawParams[0], TestObj.class));
+            default:
+                System.out.printf("[RPC Server] No matching function name '%s'.\n", name);
+        }
+        return null;
     }
-    return null;
+    
 }
 ```
 
 As you can see, it's a `switch`, and it uses `name` to identify different functions. You can extend the capability of this RPC server by adding more `case` on it.
+
+The `rawParams[]` array passed in all the parameter's JSON strings. To get the original object, use `getPara()` like I did.
+
+Also, don't forget the client side:
+
+```java
+TestObj obj = client.executeRpcCall("aloha", TestObj.class, "芜湖")
+```
+
+See that second parameter here? That's the type of return value.
 
 ## Q&As
 **Q: Why can't use this on a real project?**
 
 A: Because this project was not tested throughly, and it really doesn't match any Design Patterns. The purpose of this project was never for real projects.
 
-**Q: In file `RPCServer.java`, function `executeRpcCall(String name, Object[] params)`, it uses `(int) ((double) params[0])` to parse a received int value, why?**
+**Q: Why is `public <T> T getParam(String rawParam, Class<T> classOfParam)` correct?**
 
-A: This envolves `Gson` library. As you can see, the `Gson` library handles the objects' serialization and deserialization, which means transforming data between Objects and Json Strings(If you don't know what is Json, see [Here](https://www.runoob.com/json/json-tutorial.html)). The problem is, when handling digits from String, the `Gson` library consider them `java.lang.Double` if the type is not specified. In this case, we uses `Object` to transfer all the data(defined in class `RPCRequestObject`), which did not specify a concrete type for `Gson`. So `Gson` automatically consider the digit value as a `Double`. So we need to unbox it from `java.lang.Double` to primitive `double`, and transform it again to `int` to match the parameter list of function `TestFunctions.helloWorld(int, String)`.
+A: I copied the signatures from `com.google.gson.Gson.fromJson()`, which is relevant to template functions.
 
 **Q: Why not use Reflection systems to register functions?**
 
