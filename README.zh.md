@@ -25,16 +25,18 @@
 在 `src/top/chorg/easyrpc/demo` 目录下，有两个文件：`ClientMain` 和 `ServerMain`。 首先运行 `ServerMain.main()`，然后运行 `ClientMain.main()`，注意不要搞错了顺序。如果一切顺利的话，你会看到如下的输出：
 
 ```
-// 服务端:
+// Server:
 [RPC Server] Receiving new connection.
-[RPC Thread 1342691038] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
-[RPC Thread 1342691038] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"\"ThisIsOutputOfHelloWorld(1, 233)\""}'
-[RPC Thread 1342691038] Receiving RPC request '{"id":3,"funcName":"aloha","params":["\"芜湖\""]}'
-[RPC Thread 1342691038] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"{\"strField\":\"ThisIsStrFieldOfReturn\",\"intField\":66666666}"}'
-[RPC Thread 1342691038] Receiving RPC request '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
-[RPC Thread 1342691038] Sending RPC return '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
+[RPC Thread 1423045330] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
+[RPC Thread 1423045330] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"\"ThisIsOutputOfHelloWorld(1, 233)\""}'
+[RPC Thread 1423045330] Receiving RPC request '{"id":3,"funcName":"aloha","params":["\"芜湖\""]}'
+[RPC Thread 1423045330] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"{\"strField\":\"ThisIsStrFieldOfReturn\",\"intField\":66666666}"}'
+[RPC Thread 1423045330] Receiving RPC request '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
+[RPC Thread 1423045330] Sending RPC return '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
+[RPC Thread 1423045330] Receiving RPC request '{"id":5,"funcName":"complicate","params":["[[{\"strField\":\"1.1\",\"intField\":0},{\"strField\":\"1.2\",\"intField\":0},{\"strField\":\"1.3\",\"intField\":0},{\"strField\":\"1.4\",\"intField\":0},{\"strField\":\"1.5\",\"intField\":0}],[{\"strField\":\"2.1\",\"intField\":0},{\"strField\":\"2.2\",\"intField\":0},{\"strField\":\"2.3\",\"intField\":0},{\"strField\":\"2.4\",\"intField\":0},{\"strField\":\"2.5\",\"intField\":0}]]"]}'
+[RPC Thread 1423045330] Sending RPC return '{"id":5,"funcName":"complicate","returnValue":"[[\"1.1\",\"1.2\",\"1.3\",\"1.4\",\"1.5\"],[\"2.1\",\"2.2\",\"2.3\",\"2.4\",\"2.5\"]]"}'
 
-// 客户端:
+// Client:
 [RPC] Sending RPC request: '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
 [RPC] Receiving content: '{"id":2,"funcName":"helloWorld","returnValue":"\"ThisIsOutputOfHelloWorld(1, 233)\""}'
 ThisIsOutputOfHelloWorld(1, 233)
@@ -44,6 +46,10 @@ Printing: TestObj{strField='ThisIsStrFieldOfReturn', intField=66666666}
 [RPC] Sending RPC request: '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
 [RPC] Receiving content: '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
 Aloha! The information is(233, 111)
+[RPC] Sending RPC request: '{"id":5,"funcName":"complicate","params":["[[{\"strField\":\"1.1\",\"intField\":0},{\"strField\":\"1.2\",\"intField\":0},{\"strField\":\"1.3\",\"intField\":0},{\"strField\":\"1.4\",\"intField\":0},{\"strField\":\"1.5\",\"intField\":0}],[{\"strField\":\"2.1\",\"intField\":0},{\"strField\":\"2.2\",\"intField\":0},{\"strField\":\"2.3\",\"intField\":0},{\"strField\":\"2.4\",\"intField\":0},{\"strField\":\"2.5\",\"intField\":0}]]"]}'
+[RPC] Receiving content: '{"id":5,"funcName":"complicate","returnValue":"[[\"1.1\",\"1.2\",\"1.3\",\"1.4\",\"1.5\"],[\"2.1\",\"2.2\",\"2.3\",\"2.4\",\"2.5\"]]"}'
+1.1 | 1.2 | 1.3 | 1.4 | 1.5 | 
+2.1 | 2.2 | 2.3 | 2.4 | 2.5 | 
 
 ```
 
@@ -54,7 +60,7 @@ Aloha! The information is(233, 111)
 public class RPCServer {
 
     //...
-
+    
     public Object executeRpcCall(String name, String[] rawParams) {
         switch (name)
         {
@@ -65,6 +71,10 @@ public class RPCServer {
                 return TestFunctions.aloha(getParam(rawParams[0], String.class));
             case "objTest":
                 return TestFunctions.objTest(getParam(rawParams[0], TestObj.class));
+            case "complicate":
+                return TestFunctions.complicate(
+                        getParam(rawParams[0], new TypeToken<List<List<TestObj>>>(){}.getType())
+                );
             default:
                 System.out.printf("[RPC Server] No matching function name '%s'.\n", name);
         }
@@ -78,13 +88,21 @@ public class RPCServer {
 
 `rawParams[]` 数组保存了所有参数传输时的 JSON 字符串。要得到原始的对象，像例子里那样使用 `getParam()` 函数就好。
 
+如果你的 RPC 函数中用到了泛型类（就像例子中的 `complicate` 函数一样），你可以使用 Gson 提供的 `TypeToken` 来获取其 `Type` 对象，并传入 `getParam()` 函数中，达到与传入 `.class` 相同的效果。
+
 然后别忘了客户端：
 
 ```java
 TestObj obj = client.executeRpcCall("aloha", TestObj.class, "芜湖")
 ```
 
-在这个例子中，第二个参数填写了 `TestObj.class`，表明我的 RPC 函数返回值是 `TestObject` 类型的。
+泛型类写法：
+
+```java
+List<List<String>> result = client.executeRpcCall("complicate", new TypeToken<List<List<String>>>(){}.getType(), reqData);
+```
+
+在这个例子中，第二个参数填写了 `TestObj.class`，表明我的 RPC 函数返回值是 `TestObject` 类型的。这里填 `.class` 和 `Type` 都可以。
 
 ## Q&As
 **Q: 为什么不推荐将这个工具用到真项目中？**

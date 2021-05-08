@@ -6,6 +6,7 @@ import com.google.gson.internal.Primitives;
 
 import java.io.BufferedReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 
 public class RPCReturnObject {
     int id;
@@ -28,6 +29,10 @@ public class RPCReturnObject {
 
     public <T> T getReturnValue(Class<T> classOfT) throws JsonSyntaxException {
         return new Gson().fromJson(returnValue, classOfT);
+    }
+
+    public <T> T getReturnValue(Type typeOfT) throws JsonSyntaxException {
+        return new Gson().fromJson(returnValue, typeOfT);
     }
 
 }

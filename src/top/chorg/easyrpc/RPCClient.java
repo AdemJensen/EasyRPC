@@ -5,6 +5,7 @@ import top.chorg.easyrpc.utils.RPCRequestObject;
 import top.chorg.easyrpc.utils.RPCReturnObject;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -90,8 +91,7 @@ public class RPCClient {
         }).start();
     }
 
-    // Use this function to call remote procedure.
-    public <T> T  executeRpcCall(String name, Class<T> classOfReturnValue, Object...params) {
+    public RPCReturnObject executeRpcCall(String name, Object[] params) {
         while (status == RPCClientStatus.Preparing) Thread.onSpinWait();
         if (isClosed()) {
             System.out.println("[RPC] Error: RPC Client connection not established.");
@@ -109,11 +109,24 @@ public class RPCClient {
         }
         RPCReturnObject returnObject = receiveMap.get(id);
         if (returnObject.getFuncName().equals(name)) {
-            return returnObject.getReturnValue(classOfReturnValue);
+            return returnObject;
         } else {
             System.out.println("[RPC] Error: Return packet ID matched but func name not matched.");
             return null;
         }
+    }
+
+    public <T> T executeRpcCall(String name, Type typeOfReturnValue, Object...params) {
+        RPCReturnObject returnObject = executeRpcCall(name, params);
+        if (returnObject == null) return null;
+        return returnObject.getReturnValue(typeOfReturnValue);
+    }
+
+    // Use this function to call remote procedure.
+    public <T> T executeRpcCall(String name, Class<T> classOfReturnValue, Object...params) {
+        RPCReturnObject returnObject = executeRpcCall(name, params);
+        if (returnObject == null) return null;
+        return returnObject.getReturnValue(classOfReturnValue);
     }
 
 }

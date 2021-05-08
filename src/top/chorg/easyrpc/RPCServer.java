@@ -1,14 +1,17 @@
 package top.chorg.easyrpc;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import top.chorg.easyrpc.demo.TestObj;
 import top.chorg.easyrpc.utils.RPCServerThread;
 import top.chorg.easyrpc.utils.TestFunctions;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class RPCServer {
@@ -108,6 +111,10 @@ public class RPCServer {
         return new Gson().fromJson(rawParam, classOfParam);
     }
 
+    public <T> T getParam(String rawParam, Type typeOfParam) {
+        return new Gson().fromJson(rawParam, typeOfParam);
+    }
+
     public Object executeRpcCall(String name, String[] rawParams) {
         switch (name)
         {
@@ -118,6 +125,10 @@ public class RPCServer {
                 return TestFunctions.aloha(getParam(rawParams[0], String.class));
             case "objTest":
                 return TestFunctions.objTest(getParam(rawParams[0], TestObj.class));
+            case "complicate":
+                return TestFunctions.complicate(
+                        getParam(rawParams[0], new TypeToken<List<List<TestObj>>>(){}.getType())
+                );
             default:
                 System.out.printf("[RPC Server] No matching function name '%s'.\n", name);
         }

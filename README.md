@@ -27,12 +27,14 @@ Under folder `src/top/chorg/easyrpc/demo`, there are 2 files: `ClientMain` and `
 ```
 // Server:
 [RPC Server] Receiving new connection.
-[RPC Thread 1342691038] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
-[RPC Thread 1342691038] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"\"ThisIsOutputOfHelloWorld(1, 233)\""}'
-[RPC Thread 1342691038] Receiving RPC request '{"id":3,"funcName":"aloha","params":["\"芜湖\""]}'
-[RPC Thread 1342691038] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"{\"strField\":\"ThisIsStrFieldOfReturn\",\"intField\":66666666}"}'
-[RPC Thread 1342691038] Receiving RPC request '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
-[RPC Thread 1342691038] Sending RPC return '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
+[RPC Thread 1423045330] Receiving RPC request '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
+[RPC Thread 1423045330] Sending RPC return '{"id":2,"funcName":"helloWorld","returnValue":"\"ThisIsOutputOfHelloWorld(1, 233)\""}'
+[RPC Thread 1423045330] Receiving RPC request '{"id":3,"funcName":"aloha","params":["\"芜湖\""]}'
+[RPC Thread 1423045330] Sending RPC return '{"id":3,"funcName":"aloha","returnValue":"{\"strField\":\"ThisIsStrFieldOfReturn\",\"intField\":66666666}"}'
+[RPC Thread 1423045330] Receiving RPC request '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
+[RPC Thread 1423045330] Sending RPC return '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
+[RPC Thread 1423045330] Receiving RPC request '{"id":5,"funcName":"complicate","params":["[[{\"strField\":\"1.1\",\"intField\":0},{\"strField\":\"1.2\",\"intField\":0},{\"strField\":\"1.3\",\"intField\":0},{\"strField\":\"1.4\",\"intField\":0},{\"strField\":\"1.5\",\"intField\":0}],[{\"strField\":\"2.1\",\"intField\":0},{\"strField\":\"2.2\",\"intField\":0},{\"strField\":\"2.3\",\"intField\":0},{\"strField\":\"2.4\",\"intField\":0},{\"strField\":\"2.5\",\"intField\":0}]]"]}'
+[RPC Thread 1423045330] Sending RPC return '{"id":5,"funcName":"complicate","returnValue":"[[\"1.1\",\"1.2\",\"1.3\",\"1.4\",\"1.5\"],[\"2.1\",\"2.2\",\"2.3\",\"2.4\",\"2.5\"]]"}'
 
 // Client:
 [RPC] Sending RPC request: '{"id":2,"funcName":"helloWorld","params":["1","\"233\""]}'
@@ -44,6 +46,10 @@ Printing: TestObj{strField='ThisIsStrFieldOfReturn', intField=66666666}
 [RPC] Sending RPC request: '{"id":4,"funcName":"objTest","params":["{\"strField\":\"111\",\"intField\":233}"]}'
 [RPC] Receiving content: '{"id":4,"funcName":"objTest","returnValue":"\"Aloha! The information is(233, 111)\""}'
 Aloha! The information is(233, 111)
+[RPC] Sending RPC request: '{"id":5,"funcName":"complicate","params":["[[{\"strField\":\"1.1\",\"intField\":0},{\"strField\":\"1.2\",\"intField\":0},{\"strField\":\"1.3\",\"intField\":0},{\"strField\":\"1.4\",\"intField\":0},{\"strField\":\"1.5\",\"intField\":0}],[{\"strField\":\"2.1\",\"intField\":0},{\"strField\":\"2.2\",\"intField\":0},{\"strField\":\"2.3\",\"intField\":0},{\"strField\":\"2.4\",\"intField\":0},{\"strField\":\"2.5\",\"intField\":0}]]"]}'
+[RPC] Receiving content: '{"id":5,"funcName":"complicate","returnValue":"[[\"1.1\",\"1.2\",\"1.3\",\"1.4\",\"1.5\"],[\"2.1\",\"2.2\",\"2.3\",\"2.4\",\"2.5\"]]"}'
+1.1 | 1.2 | 1.3 | 1.4 | 1.5 | 
+2.1 | 2.2 | 2.3 | 2.4 | 2.5 | 
 
 ```
 
@@ -65,6 +71,10 @@ public class RPCServer {
                 return TestFunctions.aloha(getParam(rawParams[0], String.class));
             case "objTest":
                 return TestFunctions.objTest(getParam(rawParams[0], TestObj.class));
+            case "complicate":
+                return TestFunctions.complicate(
+                        getParam(rawParams[0], new TypeToken<List<List<TestObj>>>(){}.getType())
+                );
             default:
                 System.out.printf("[RPC Server] No matching function name '%s'.\n", name);
         }
@@ -76,7 +86,9 @@ public class RPCServer {
 
 As you can see, it's a `switch`, and it uses `name` to identify different functions. You can extend the capability of this RPC server by adding more `case` on it.
 
-The `rawParams[]` array passed in all the parameter's JSON strings. To get the original object, use `getPara()` like I did.
+The `rawParams[]` array passed in all the parameter's JSON strings. To get the original object, use `getParam()` like I did.
+
+For generic types, Gson has offered us a `TypeToken` to resolve that issue. Use `new TypeToken<T>(){}.getType()` to get a type object of T to replace `T.class`.
 
 Also, don't forget the client side:
 
@@ -84,7 +96,13 @@ Also, don't forget the client side:
 TestObj obj = client.executeRpcCall("aloha", TestObj.class, "芜湖")
 ```
 
-See that second parameter here? That's the type of return value.
+Or using `TypeToken`:
+
+```java
+List<List<String>> result = client.executeRpcCall("complicate", new TypeToken<List<List<String>>>(){}.getType(), reqData);
+```
+
+See that second parameter here? That's the type of return value. `.class` and `Type` are both OK.
 
 ## Q&As
 **Q: Why can't use this on a real project?**
