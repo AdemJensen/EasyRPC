@@ -4,6 +4,7 @@ import top.chorg.easyrpc.demo.TestObj;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TestFunctions {
 
@@ -20,15 +21,10 @@ public class TestFunctions {
     }
 
     public static List<List<String>> complicate(List<List<TestObj>> a) {
-        List<List<String>> res = new ArrayList<>();
-        for (List<TestObj> testObjs : a) {
-            List<String> sub = new ArrayList<>();
-            for (TestObj testObj : testObjs) {
-                sub.add(testObj.strField);
-            }
-            res.add(sub);
-        }
-        return res;
+        // Extract StringField from each element.
+        return a.stream().map(subList ->
+            subList.stream().map(obj -> obj.strField).collect(Collectors.toList())
+        ).collect(Collectors.toList());
     }
 
 }
